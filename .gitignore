@@ -1,0 +1,36 @@
+# Bot configuration
+config.py
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+
+# Development files
+test_bot.py
+bot.py
+bot_fixed.py
+debug_bot.py
+diagnostic_bot.py
+fixed_bot.py
+rally_calculator_bot.py
+simple_bot.py
+simple_rally_bot.py
+working_bot.py
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
