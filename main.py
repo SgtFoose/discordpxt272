@@ -2,19 +2,6 @@ import os
 import discord
 from discord.ext import commands
 from discord import ui, Interaction
-from discord.ui import TextInput
-
-# Optional: Import keep@bot.command()
-async def rally(ctx):
-    """Start the Bear Hunt Rally Calculator"""
-    embed = discord.Embed(
-        title="🐻 Bear Hunt Rally Calculator",
-        description="Configure your Bear Hunt rally team for maximum effectiveness!\\n\\n**Rally Mechanics (Official Guide):**\\n👑 **Rally Captain**: Enter player name, select 1-3 heroes (up to 9 skills total)\\n🤝 **Rally Members**: Contribute 4 highest-level first expedition skills\\n📊 **Captain skills**: All additive within rally\\n⚠️ **Note**: Chance-based skills (like Jabel) don't stack for members\\n🔄 Simple addition: Captain Total + Top 4 Member Skills\\n📊 Color-coded optimization results",
-        color=0x0099ff
-    )
-    
-    view = RallyCalculatorView()
-    await ctx.send(embed=embed, view=view)
 
 # Optional: Import keep-alive for 24/7 hosting
 try:
@@ -34,10 +21,6 @@ if not BOT_TOKEN:
 intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-
-if not BOT_TOKEN:
-    print("❌ Error: DISCORD_TOKEN environment variable not set!")
-    exit(1)
 
 # Enhanced bot with Bear Hunt Rally Calculator
 intents = discord.Intents.default()
@@ -147,20 +130,22 @@ async def rally(ctx):
     await ctx.send(embed=embed, view=view)
 
 # Rally Calculator UI Classes
-class CaptainNameModal(ui.Modal):
+class RallyCalculatorView(ui.View):
     def __init__(self):
-        super().__init__(title="Rally Captain Setup")
+        super().__init__(timeout=300)
         
-        self.name_input = TextInput(
-            label="Rally Captain Player Name",
-            placeholder="Enter the player name who will be rally captain...",
-            max_length=50,
-            required=True
+        # Add simple button to start with default captain name
+        start_button = ui.Button(
+            label="Start Rally Setup",
+            style=discord.ButtonStyle.primary,
+            emoji="⚔️"
         )
-        self.add_item(self.name_input)
+        start_button.callback = self.start_setup_callback
+        self.add_item(start_button)
     
-    async def on_submit(self, interaction: Interaction):
-        captain_name = self.name_input.value.strip()
+    async def start_setup_callback(self, interaction: Interaction):
+        # Use the Discord username as captain name
+        captain_name = interaction.user.display_name
         
         embed = discord.Embed(
             title=f"🐻 Rally Captain Setup",
@@ -203,24 +188,6 @@ class HeroCountView(ui.View):
         # Switch to captain multi-hero configuration
         captain_view = CaptainMultiHeroView(self.captain_name, hero_count)
         await interaction.response.edit_message(embed=embed, view=captain_view)
-
-class RallyCalculatorView(ui.View):
-    def __init__(self):
-        super().__init__(timeout=300)
-        
-        # Add simple text input button for captain name
-        name_button = ui.Button(
-            label="Start Rally Setup",
-            style=discord.ButtonStyle.primary,
-            emoji="⚔️"
-        )
-        name_button.callback = self.start_setup_callback
-        self.add_item(name_button)
-    
-    async def start_setup_callback(self, interaction: Interaction):
-        # Show modal for player name input
-        modal = CaptainNameModal()
-        await interaction.response.send_modal(modal)
 
 class CaptainMultiHeroView(ui.View):
     def __init__(self, captain, hero_count):
