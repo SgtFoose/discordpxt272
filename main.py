@@ -22,11 +22,6 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Enhanced bot with Bear Hunt Rally Calculator
-intents = discord.Intents.default()
-intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
-
 # Hero data - Jabel included (captain can use, joiners should avoid chance-based skills)
 HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric", "Jabel"]
 
@@ -506,12 +501,12 @@ class JoinerPoolConfigView(ui.View):
             color = 0x00ff00
             status = "Excellent!"
         
-        summary_lines.append(f"\\n🎯 **Total Rally Size:** {len(self.joiners) + 1} members")
-        summary_lines.append(f"� **Active Skills:** Captain ({self.captain_total}%) + Top 4 Members ({joiner_total}%)")
+        summary_lines.append(f"\n🎯 **Total Rally Size:** {len(self.joiners) + 1} members")
+        summary_lines.append(f"⚔️ **Active Skills:** Captain ({self.captain_total}%) + Top 4 Members ({joiner_total}%)")
         
         embed = discord.Embed(
             title="🧮 Bear Hunt Rally Calculation (PDF Rules)",
-            description="\\n".join(summary_lines),
+            description="\n".join(summary_lines),
             color=color
         )
         
