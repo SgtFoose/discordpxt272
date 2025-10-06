@@ -211,7 +211,7 @@ class RallyCalculatorView(ui.View):
         name_button = ui.Button(
             label="Start Rally Setup",
             style=discord.ButtonStyle.primary,
-            emoji="�"
+            emoji="⚔️"
         )
         name_button.callback = self.start_setup_callback
         self.add_item(name_button)
