@@ -2,6 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from discord import ui, Interaction
+from discord.ui import TextInput
 
 # Optional: Import keep@bot.command()
 async def rally(ctx):
@@ -150,7 +151,7 @@ class CaptainNameModal(ui.Modal):
     def __init__(self):
         super().__init__(title="Rally Captain Setup")
         
-        self.name_input = ui.TextInput(
+        self.name_input = TextInput(
             label="Rally Captain Player Name",
             placeholder="Enter the player name who will be rally captain...",
             max_length=50,
