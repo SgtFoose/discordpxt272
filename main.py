@@ -808,6 +808,169 @@ async def ping(ctx):
     latency = round(bot.latency * 1000)
     await ctx.send(f"🏓 Pong! Latency: {latency}ms")
 
+# Traditional message commands (work immediately)
+@bot.command(name='ping')
+async def ping_command(ctx):
+    """Traditional ping command - works immediately"""
+    latency = round(bot.latency * 1000)
+    await ctx.send(f"🏓 Pong! Latency: {latency}ms")
+
+@bot.command(name='status')
+async def status_command(ctx):
+    """Traditional status command - works immediately"""
+    try:
+        import urllib.request
+        import urllib.error
+        from datetime import datetime
+        import time
+        
+        # Start timing
+        start_time = time.time()
+        
+        embed = discord.Embed(
+            title="🔍 System Status Check",
+            color=0x00ff00
+        )
+        
+        # Bot Status
+        embed.add_field(
+            name="🤖 Discord Bot",
+            value=f"✅ Online\n🕐 Latency: {round(bot.latency * 1000)}ms",
+            inline=True
+        )
+        
+        # Keep-alive Web Server Status
+        web_status = "❌ Offline"
+        web_response_time = "N/A"
+        try:
+            web_start = time.time()
+            with urllib.request.urlopen('http://localhost:8080/ping', timeout=5) as response:
+                web_response_time = f"{round((time.time() - web_start) * 1000)}ms"
+                web_status = "✅ Online"
+        except Exception as e:
+            web_status = f"❌ Error: {str(e)[:30]}..."
+        
+        embed.add_field(
+            name="🌐 Keep-Alive Server",
+            value=f"{web_status}\n🕐 Response: {web_response_time}",
+            inline=True
+        )
+        
+        # External Monitoring Status
+        koyeb_status = "❌ Offline"
+        koyeb_response_time = "N/A"
+        try:
+            koyeb_start = time.time()
+            koyeb_url = "https://collective-wildebeest-discordpxt272-f4306de1.koyeb.app/health"
+            with urllib.request.urlopen(koyeb_url, timeout=10) as response:
+                koyeb_response_time = f"{round((time.time() - koyeb_start) * 1000)}ms"
+                if response.read().decode() == "OK":
+                    koyeb_status = "✅ Online"
+                else:
+                    koyeb_status = "⚠️ Responding but not OK"
+        except Exception as e:
+            koyeb_status = f"❌ Error: {str(e)[:30]}..."
+        
+        embed.add_field(
+            name="☁️ Koyeb Public Endpoint",
+            value=f"{koyeb_status}\n🕐 Response: {koyeb_response_time}",
+            inline=True
+        )
+        
+        # Rally Calculator Test
+        calculator_status = "✅ Ready"
+        hero_count = len(HEROES)
+        
+        embed.add_field(
+            name="🧮 Rally Calculator",
+            value=f"{calculator_status}\n👥 Heroes: {hero_count}/11",
+            inline=True
+        )
+        
+        # Monitoring Services
+        embed.add_field(
+            name="📊 External Monitoring",
+            value="🔗 [UptimeRobot](https://stats.uptimerobot.com/zxDtL1vced)\n🔗 [Cron-job.org](https://console.cron-job.org/)",
+            inline=True
+        )
+        
+        # System Info
+        embed.add_field(
+            name="⚙️ System Info",
+            value=f"🐍 Python Runtime\n🌐 Flask Keep-Alive\n🔄 Self-Ping Active",
+            inline=True
+        )
+        
+        # Overall status
+        total_time = round((time.time() - start_time) * 1000)
+        
+        if "✅" in web_status and "✅" in koyeb_status:
+            overall_status = "🟢 All Systems Operational"
+            embed.color = 0x00ff00
+        elif "✅" in web_status or "✅" in koyeb_status:
+            overall_status = "🟡 Partial Service Available"
+            embed.color = 0xffff00
+        else:
+            overall_status = "🔴 Service Issues Detected"
+            embed.color = 0xff0000
+        
+        embed.add_field(
+            name="📈 Overall Status",
+            value=f"{overall_status}\n⏱️ Check completed in {total_time}ms",
+            inline=False
+        )
+        
+        embed.set_footer(
+            text=f"Status checked at {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')} • Use !rally for calculator"
+        )
+        
+        await ctx.send(embed=embed)
+        
+    except Exception as e:
+        # Fallback simple status
+        await ctx.send(f"🔍 **Quick Status Check**\n✅ Bot Online\n🕐 Latency: {round(bot.latency * 1000)}ms\n❌ Error in detailed check: {str(e)}")
+
+@bot.command(name='rally')
+async def rally_command(ctx):
+    """Traditional rally calculator command - works immediately"""
+    embed = discord.Embed(
+        title="🐻 Bear Hunt Rally Calculator",
+        description="Configure your Bear Hunt rally team for maximum effectiveness!\n\n**Features:**\n⚔️ 11 unique heroes with expedition skills\n🔄 Multiplicative bonuses for hero diversity\n📊 Color-coded optimization results\n🎯 Support for duplicate heroes",
+        color=0x0099ff
+    )
+    
+    view = RallyCalculatorView()
+    await ctx.send(embed=embed, view=view)
+
+@bot.command(name='help')
+async def help_command(ctx):
+    """Show available commands"""
+    embed = discord.Embed(
+        title="🤖 Bot Commands",
+        description="Available commands for the Bear Hunt Rally Calculator",
+        color=0x00ff99
+    )
+    
+    embed.add_field(
+        name="🎯 Main Commands",
+        value="• `!rally` - Start rally calculator\n• `!status` - Check system status\n• `!ping` - Test bot response",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="💡 Slash Commands (when available)",
+        value="• `/rally_calculator` - Same as !rally\n• `/status` - Same as !status\n• `/ping` - Same as !ping",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🔗 Monitoring",
+        value="• [UptimeRobot Status](https://stats.uptimerobot.com/zxDtL1vced)\n• [Koyeb Service](https://collective-wildebeest-discordpxt272-f4306de1.koyeb.app/)",
+        inline=False
+    )
+    
+    await ctx.send(embed=embed)
+
 if __name__ == "__main__":
     print("🚀 Starting Bear Hunt Rally Calculator for deployment...")
     bot.run(BOT_TOKEN)
