@@ -22,6 +22,24 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
+@bot.event
+async def on_ready():
+    print(f"🤖 {bot.user} has logged in!")
+    print("🐻 Bear Hunt Rally Calculator ready for deployment!")
+
+@bot.event
+async def on_message(message):
+    # Don't respond to bot's own messages
+    if message.author == bot.user:
+        return
+    
+    # Log all messages starting with ! for debugging
+    if message.content.startswith('!'):
+        print(f"📝 Command received: {message.content} from {message.author}")
+    
+    # Process commands
+    await bot.process_commands(message)
+
 # Hero data
 HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric"]
 
@@ -90,6 +108,22 @@ HERO_SKILLS = {
         "Exhortation": {"effect": "Health Up", "values": [5, 10, 15, 20, 25]}
     }
 }
+
+# Simple test commands first
+@bot.command()
+async def alive(ctx):
+    """Super simple alive check"""
+    await ctx.send("🟢 Bot is alive!")
+
+@bot.command()
+async def simple(ctx):
+    """Simplest possible command"""
+    await ctx.send("✅ Simple command works!")
+
+@bot.command()
+async def check(ctx):
+    """Basic check command"""
+    await ctx.send(f"🤖 Bot online! Latency: {round(bot.latency * 1000)}ms")
 
 class JoinerConfigView(ui.View):
     def __init__(self, captain, captain_skill, captain_effect, joiner_count):
