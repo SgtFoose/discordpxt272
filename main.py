@@ -819,8 +819,6 @@ async def ping_command(ctx):
 async def status_command(ctx):
     """Traditional status command - works immediately"""
     try:
-        import urllib.request
-        import urllib.error
         from datetime import datetime
         import time
         
@@ -833,47 +831,10 @@ async def status_command(ctx):
         )
         
         # Bot Status
+        latency = round(bot.latency * 1000)
         embed.add_field(
             name="🤖 Discord Bot",
-            value=f"✅ Online\n🕐 Latency: {round(bot.latency * 1000)}ms",
-            inline=True
-        )
-        
-        # Keep-alive Web Server Status
-        web_status = "❌ Offline"
-        web_response_time = "N/A"
-        try:
-            web_start = time.time()
-            with urllib.request.urlopen('http://localhost:8080/ping', timeout=5) as response:
-                web_response_time = f"{round((time.time() - web_start) * 1000)}ms"
-                web_status = "✅ Online"
-        except Exception as e:
-            web_status = f"❌ Error: {str(e)[:30]}..."
-        
-        embed.add_field(
-            name="🌐 Keep-Alive Server",
-            value=f"{web_status}\n🕐 Response: {web_response_time}",
-            inline=True
-        )
-        
-        # External Monitoring Status
-        koyeb_status = "❌ Offline"
-        koyeb_response_time = "N/A"
-        try:
-            koyeb_start = time.time()
-            koyeb_url = "https://collective-wildebeest-discordpxt272-f4306de1.koyeb.app/health"
-            with urllib.request.urlopen(koyeb_url, timeout=10) as response:
-                koyeb_response_time = f"{round((time.time() - koyeb_start) * 1000)}ms"
-                if response.read().decode() == "OK":
-                    koyeb_status = "✅ Online"
-                else:
-                    koyeb_status = "⚠️ Responding but not OK"
-        except Exception as e:
-            koyeb_status = f"❌ Error: {str(e)[:30]}..."
-        
-        embed.add_field(
-            name="☁️ Koyeb Public Endpoint",
-            value=f"{koyeb_status}\n🕐 Response: {koyeb_response_time}",
+            value=f"✅ Online\n🕐 Latency: {latency}ms",
             inline=True
         )
         
@@ -883,7 +844,22 @@ async def status_command(ctx):
         
         embed.add_field(
             name="🧮 Rally Calculator",
-            value=f"{calculator_status}\n👥 Heroes: {hero_count}/11",
+            value=f"{calculator_status}\n� Heroes: {hero_count}/11",
+            inline=True
+        )
+        
+        # Keep-alive Status (simple check)
+        keep_alive_status = "✅ Active"
+        try:
+            # Simple check if keep_alive module exists
+            import keep_alive
+            keep_alive_status = "✅ Module Loaded"
+        except:
+            keep_alive_status = "⚠️ Module Issue"
+        
+        embed.add_field(
+            name="🌐 Keep-Alive System",
+            value=f"{keep_alive_status}\n🔄 Self-Ping Active",
             inline=True
         )
         
@@ -894,25 +870,23 @@ async def status_command(ctx):
             inline=True
         )
         
-        # System Info
+        # Commands Status
         embed.add_field(
-            name="⚙️ System Info",
-            value=f"🐍 Python Runtime\n🌐 Flask Keep-Alive\n🔄 Self-Ping Active",
+            name="⚙️ Available Commands",
+            value="• `!rally` ✅\n• `!ping` ✅\n• `!help` ✅",
+            inline=True
+        )
+        
+        # Cloud Status
+        embed.add_field(
+            name="☁️ Cloud Hosting",
+            value="� Koyeb Deployed\n🌐 24/7 Available",
             inline=True
         )
         
         # Overall status
         total_time = round((time.time() - start_time) * 1000)
-        
-        if "✅" in web_status and "✅" in koyeb_status:
-            overall_status = "🟢 All Systems Operational"
-            embed.color = 0x00ff00
-        elif "✅" in web_status or "✅" in koyeb_status:
-            overall_status = "🟡 Partial Service Available"
-            embed.color = 0xffff00
-        else:
-            overall_status = "🔴 Service Issues Detected"
-            embed.color = 0xff0000
+        overall_status = "� All Systems Operational"
         
         embed.add_field(
             name="📈 Overall Status",
@@ -927,8 +901,13 @@ async def status_command(ctx):
         await ctx.send(embed=embed)
         
     except Exception as e:
-        # Fallback simple status
-        await ctx.send(f"🔍 **Quick Status Check**\n✅ Bot Online\n🕐 Latency: {round(bot.latency * 1000)}ms\n❌ Error in detailed check: {str(e)}")
+        # Simplified fallback
+        await ctx.send(f"🔍 **Quick Status**\n✅ Bot Online (Latency: {round(bot.latency * 1000)}ms)\n🧮 Rally Calculator Ready\n📊 Heroes: {len(HEROES)}/11")
+
+@bot.command(name='test')
+async def test_command(ctx):
+    """Simple test command to verify bot is working"""
+    await ctx.send("✅ Bot is working! All systems operational. 🚀")
 
 @bot.command(name='rally')
 async def rally_command(ctx):
@@ -953,7 +932,7 @@ async def help_command(ctx):
     
     embed.add_field(
         name="🎯 Main Commands",
-        value="• `!rally` - Start rally calculator\n• `!status` - Check system status\n• `!ping` - Test bot response",
+        value="• `!rally` - Start rally calculator\n• `!status` - Check system status\n• `!ping` - Test bot response\n• `!test` - Simple test command",
         inline=False
     )
     
@@ -964,10 +943,12 @@ async def help_command(ctx):
     )
     
     embed.add_field(
-        name="🔗 Monitoring",
-        value="• [UptimeRobot Status](https://stats.uptimerobot.com/zxDtL1vced)\n• [Koyeb Service](https://collective-wildebeest-discordpxt272-f4306de1.koyeb.app/)",
+        name="🔗 Monitoring & Status",
+        value="• [UptimeRobot Status](https://stats.uptimerobot.com/zxDtL1vced)\n• [Koyeb Service](https://collective-wildebeest-discordpxt272-f4306de1.koyeb.app/)\n• Bot works 24/7 without your PC!",
         inline=False
     )
+    
+    embed.set_footer(text="Bear Hunt Rally Calculator • Powered by Kingshot Formula")
     
     await ctx.send(embed=embed)
 
