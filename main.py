@@ -477,6 +477,10 @@ class JoinerPoolConfigView(ui.View):
         
         summary_lines = [f"**Rally Captain:** {self.captain} (+{self.captain_total}%)"]
         
+        # Show detailed captain hero breakdown
+        for i, hero in enumerate(self.captain_heroes):
+            summary_lines.append(f"  **Hero {i+1}:** {hero['hero']} - {hero['skill']} (+{hero['effect']}%)")
+        
         joiner_total = 0
         for i, joiner in enumerate(top_4_joiners):
             summary_lines.append(f"**Top Member {i+1}:** {joiner['hero']} (+{joiner['effect']}%)")
