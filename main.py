@@ -23,7 +23,7 @@ intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
 # Hero data
-HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric"]
+HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric", "Jabel"]
 
 # Hero effect operation mapping for multiplicative bonuses
 HERO_EFFECT_OPS = {
@@ -37,7 +37,8 @@ HERO_EFFECT_OPS = {
     "Fahd": 107,
     "Saul": 108,
     "Hilde": 109,
-    "Eric": 110
+    "Eric": 110,
+    "Jabel": 111
 }
 
 HERO_SKILLS = {
@@ -86,6 +87,12 @@ HERO_SKILLS = {
         "Holy Warrior": {"effect": "Enemy Troop Attack Down", "values": [4, 8, 12, 16, 20]},
         "Conviction": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
         "Exhortation": {"effect": "Health Up", "values": [5, 10, 15, 20, 25]}
+    },
+    "Jabel": {
+        "No Skill": {"effect": "No bonus", "values": [0]},
+        "Rally Flag": {"effect": "Damage Taken Chance Down", "values": [8, 16, 24, 32, 40]},
+        "Hero's Domain": {"effect": "Damage Up", "values": [10, 20, 30, 40, 50]},
+        "Youthful Rage": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     }
 }
 
