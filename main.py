@@ -241,37 +241,237 @@ class SkillConfigView(ui.View):
     
     async def joiner_count_callback(self, interaction: Interaction):
         joiner_count = int(interaction.data['values'][0])
-        captain_bonus = self.selected_effect
         
-        # Calculate basic rally bonus
-        total_bonus = captain_bonus + 100  # Base 100% + captain skill
+        embed = discord.Embed(
+            title="🐻 Bear Hunt Rally Configuration",
+            description=f"**Rally Captain:** {self.captain} ✅\n**Joiners to configure:** {joiner_count}\n\nLet's configure each joiner hero...",
+            color=0x0099ff
+        )
         
-        if total_bonus < 125:
+        # Switch to joiner configuration
+        joiner_view = JoinerConfigView(self.captain, self.selected_effect, joiner_count)
+        await interaction.response.edit_message(embed=embed, view=joiner_view)
+
+# Joiner Configuration Class
+class JoinerConfigView(ui.View):
+    def __init__(self, captain, captain_effect, joiner_count):
+        super().__init__(timeout=300)
+        self.captain = captain
+        self.captain_effect = captain_effect
+        self.joiner_count = joiner_count
+        self.joiners = []
+        self.current_joiner = 0
+        
+        # Start with first joiner selection
+        self.show_joiner_selection()
+    
+    def show_joiner_selection(self):
+        self.clear_items()
+        
+        # Add hero selection for current joiner
+        hero_options = []
+        for hero in HEROES:
+            hero_options.append(discord.SelectOption(
+                label=hero,
+                value=hero,
+                description=f"Select {hero} as joiner #{self.current_joiner + 1}"
+            ))
+        
+        hero_select = ui.Select(
+            placeholder=f"Choose joiner hero #{self.current_joiner + 1}...",
+            options=hero_options
+        )
+        hero_select.callback = self.joiner_hero_callback
+        self.add_item(hero_select)
+    
+    async def joiner_hero_callback(self, interaction: Interaction):
+        selected_hero = interaction.data['values'][0]
+        
+        # Add skill selection for this joiner
+        embed = discord.Embed(
+            title="🐻 Bear Hunt Rally Configuration",
+            description=f"**Rally Captain:** {self.captain} ✅\n**Current Joiner:** {selected_hero}\n\n🎯 Select expedition skill for {selected_hero}:",
+            color=0x0099ff
+        )
+        
+        self.clear_items()
+        skill_options = []
+        for skill_name in HERO_SKILLS[selected_hero].keys():
+            skill_options.append(discord.SelectOption(
+                label=skill_name,
+                value=f"{selected_hero}|{skill_name}",
+                description=f"{HERO_SKILLS[selected_hero][skill_name]['effect']}"
+            ))
+        
+        skill_select = ui.Select(
+            placeholder="Choose expedition skill...",
+            options=skill_options
+        )
+        skill_select.callback = self.joiner_skill_callback
+        self.add_item(skill_select)
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    async def joiner_skill_callback(self, interaction: Interaction):
+        selected = interaction.data['values'][0]
+        hero_name, skill_name = selected.split('|')
+        skill_effects = HERO_SKILLS[hero_name][skill_name]
+        
+        embed = discord.Embed(
+            title="🐻 Bear Hunt Rally Configuration",
+            description=f"**Rally Captain:** {self.captain} ✅\n**Current Joiner:** {hero_name}\n**Selected Skill:** {skill_name}\n\nNow select the effect level:",
+            color=0x0099ff
+        )
+        
+        # Add effect level selection
+        self.clear_items()
+        effect_options = []
+        for i, value in enumerate(skill_effects['values']):
+            effect_options.append(discord.SelectOption(
+                label=f"Level {i+1}: +{value}%",
+                value=f"{hero_name}|{skill_name}|{value}",
+                description=f"{skill_effects['effect']} +{value}%"
+            ))
+        
+        effect_select = ui.Select(
+            placeholder="Choose effect level...",
+            options=effect_options
+        )
+        effect_select.callback = self.joiner_effect_callback
+        self.add_item(effect_select)
+        
+        await interaction.response.edit_message(embed=embed, view=self)
+    
+    async def joiner_effect_callback(self, interaction: Interaction):
+        selected = interaction.data['values'][0]
+        hero_name, skill_name, effect_value = selected.split('|')
+        effect_value = int(effect_value)
+        
+        # Save this joiner
+        self.joiners.append({
+            'hero': hero_name,
+            'skill': skill_name,
+            'effect': effect_value
+        })
+        
+        self.current_joiner += 1
+        
+        # Check if we need more joiners
+        if self.current_joiner < self.joiner_count:
+            embed = discord.Embed(
+                title="🐻 Bear Hunt Rally Configuration",
+                description=f"**Rally Captain:** {self.captain} ✅\n**Joiners Configured:** {self.current_joiner}/{self.joiner_count}\n\n✅ Joiner #{self.current_joiner} configured! Setting up next joiner...",
+                color=0x0099ff
+            )
+            
+            await interaction.response.edit_message(embed=embed, view=None)
+            
+            # Small delay then show next joiner selection
+            import asyncio
+            await asyncio.sleep(1)
+            
+            embed = discord.Embed(
+                title="🐻 Bear Hunt Rally Configuration", 
+                description=f"**Rally Captain:** {self.captain} ✅\n**Joiners Configured:** {self.current_joiner}/{self.joiner_count}\n\n⚔️ Select joiner #{self.current_joiner + 1} hero:",
+                color=0x0099ff
+            )
+            
+            self.show_joiner_selection()
+            await interaction.edit_original_response(embed=embed, view=self)
+        else:
+            # All joiners configured, show final summary
+            await self.show_final_summary(interaction)
+    
+    async def show_final_summary(self, interaction: Interaction):
+        # Calculate final rally bonus with multiplicative stacking
+        all_heroes = [self.captain] + [j['hero'] for j in self.joiners]
+        
+        summary_lines = [f"**Rally Captain:** {self.captain} (+{self.captain_effect}%)"]
+        for i, joiner in enumerate(self.joiners):
+            summary_lines.append(f"**Joiner {i+1}:** {joiner['hero']} (+{joiner['effect']}%)")
+        
+        # Calculate multiplicative bonuses
+        bonus_effects = {}
+        # Add captain bonus
+        captain_op = HERO_EFFECT_OPS[self.captain]
+        bonus_effects[captain_op] = self.captain_effect
+        
+        # Add joiner bonuses
+        for joiner in self.joiners:
+            joiner_op = HERO_EFFECT_OPS[joiner['hero']]
+            if joiner_op in bonus_effects:
+                bonus_effects[joiner_op] += joiner['effect']  # Same hero type - additive
+            else:
+                bonus_effects[joiner_op] = joiner['effect']  # Different hero type
+        
+        # Calculate final multiplier
+        damage_multiplier = 1.0
+        for effect_op, bonus in bonus_effects.items():
+            damage_multiplier *= (1 + bonus/100)
+        
+        total_percentage = (damage_multiplier - 1) * 100
+        
+        if total_percentage < 50:
             color = 0xff0000
             status = "Below Optimal"
-        elif total_bonus <= 150:
-            color = 0xffa500
+        elif total_percentage <= 100:
+            color = 0xffa500  
             status = "Good Setup"
         else:
             color = 0x00ff00
             status = "Excellent!"
         
+        summary_lines.append(f"\n🎯 **Total Rally Size:** {len(all_heroes)} heroes")
+        summary_lines.append(f"📋 **Rally Composition:** {', '.join(all_heroes)}")
+        
         embed = discord.Embed(
             title="🧮 Bear Hunt Rally Calculation",
-            description=f"**Rally Captain:** {self.captain} (+{captain_bonus}%)",
+            description="\n".join(summary_lines),
             color=color
         )
         
-        embed.add_field(name="📊 Total Rally Bonus", value=f"**{total_bonus}%** ({status})", inline=False)
-        embed.add_field(name="🎯 Joiners", value=f"{joiner_count} heroes selected", inline=False)
+        embed.add_field(
+            name="📊 Total Rally Bonus",
+            value=f"**{total_percentage:.1f}%** ({status})",
+            inline=False
+        )
+        
+        # Show calculation method
+        if len(bonus_effects) == 1:
+            embed.add_field(
+                name="📈 Calculation Method",
+                value="**Simple Addition** (same hero types)",
+                inline=False
+            )
+        else:
+            embed.add_field(
+                name="📈 Calculation Method", 
+                value="**Multiplicative Stacking** (different hero types)",
+                inline=False
+            )
+        
+        self.clear_items()
         
         # Add new rally button
-        self.clear_items()
-        new_rally_btn = ui.Button(label="Calculate New Rally", style=discord.ButtonStyle.primary, emoji="🆕")
+        new_rally_btn = ui.Button(
+            label="Calculate New Rally", 
+            style=discord.ButtonStyle.primary, 
+            emoji="🆕"
+        )
         new_rally_btn.callback = self.reset_callback
         self.add_item(new_rally_btn)
         
         await interaction.response.edit_message(embed=embed, view=self)
+    
+    async def reset_callback(self, interaction: Interaction):
+        # Start a completely new rally calculation
+        new_view = RallyCalculatorView()
+        embed = discord.Embed(
+            title="🐻 Bear Hunt Rally Calculator",
+            description="Select your rally captain to begin:",
+            color=0x0099ff
+        )
+        await interaction.response.edit_message(embed=embed, view=new_view)
     
     async def reset_callback(self, interaction: Interaction):
         new_view = RallyCalculatorView()
