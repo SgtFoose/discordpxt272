@@ -503,23 +503,13 @@ class JoinerPoolConfigView(ui.View):
         
         summary_lines.append(f"\n🎯 **Total Rally Size:** {len(self.joiners) + 1} members")
         summary_lines.append(f"⚔️ **Active Skills:** Captain ({self.captain_total}%) + Top 4 Members ({joiner_total}%)")
+        summary_lines.append(f"\n📊 **Total Rally Bonus:** {total_rally_bonus}% ({status})")
+        summary_lines.append(f"📈 **Calculation Method:** Captain (additive) + Top 4 Member Skills (per PDF)")
         
         embed = discord.Embed(
             title="🧮 Bear Hunt Rally Calculation (PDF Rules)",
             description="\n".join(summary_lines),
             color=color
-        )
-        
-        embed.add_field(
-            name="📊 Total Rally Bonus",
-            value=f"**{total_rally_bonus}%** ({status})",
-            inline=False
-        )
-        
-        embed.add_field(
-            name="📈 Calculation Method", 
-            value="**Captain (additive) + Top 4 Member Skills (per PDF)**",
-            inline=False
         )
         
         self.clear_items()
