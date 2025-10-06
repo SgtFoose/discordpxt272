@@ -43,56 +43,40 @@ HERO_EFFECT_OPS = {
 
 HERO_SKILLS = {
     "Chenko": {
-        "Stand of Arms": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Shield Wall": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]}
+        "Stand of Arms": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Amadeus": {
-        "Battle Ready": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Way of the Blade": {"effect": "Attack Up", "values": [5, 10, 15, 20, 25]},
-        "Unrighteous Strike": {"effect": "Damage Dealt Chance Up", "values": [8, 16, 24, 32, 40]}
+        "Battle Ready": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Yeonwoo": {
-        "On Guard": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Well-Traveled": {"effect": "Increases Research Speed", "values": [3, 6, 9, 12, 15]}
+        "On Guard": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Amane": {
-        "Tri-Phalanx": {"effect": "Attack Up", "values": [5, 10, 15, 20, 25]},
-        "Exorcism": {"effect": "Healing Speed Up", "values": [10, 20, 30, 40, 50]}
+        "Tri-Phalanx": {"effect": "Attack Up", "values": [5, 10, 15, 20, 25]}
     },
     "Howard": {
-        "Defenders' Edge": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
-        "Weaken": {"effect": "Enemy Troops Attack Down", "values": [4, 8, 12, 16, 20]}
+        "Defenders' Edge": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]}
     },
     "Quinn": {
-        "Sixth Sense": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
-        "Vigor": {"effect": "Health Up", "values": [5, 10, 15, 20, 25]}
+        "Sixth Sense": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]}
     },
     "Gordon": {
-        "Bloodthirsty": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Protection": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]}
+        "Bloodthirsty": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Fahd": {
-        "Hunter": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Assassinate": {"effect": "Damage Dealt Chance Up", "values": [8, 16, 24, 32, 40]}
+        "Hunter": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Saul": {
-        "Blade Dance": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]},
-        "Trial by Fire": {"effect": "Damage Taken Chance Down", "values": [8, 16, 24, 32, 40]}
+        "Blade Dance": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     },
     "Hilde": {
-        "Iron Will": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
-        "Overwhelm": {"effect": "Enemy Troops Attack Down", "values": [4, 8, 12, 16, 20]}
+        "Iron Will": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]}
     },
     "Eric": {
-        "Holy Warrior": {"effect": "Enemy Troop Attack Down", "values": [4, 8, 12, 16, 20]},
-        "Conviction": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
-        "Exhortation": {"effect": "Health Up", "values": [5, 10, 15, 20, 25]}
+        "Holy Warrior": {"effect": "Enemy Troop Attack Down", "values": [4, 8, 12, 16, 20]}
     },
     "Jabel": {
-        "No Skill": {"effect": "No bonus", "values": [0]},
-        "Rally Flag": {"effect": "Damage Taken Chance Down", "values": [8, 16, 24, 32, 40]},
-        "Hero's Domain": {"effect": "Damage Up", "values": [10, 20, 30, 40, 50]},
-        "Youthful Rage": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
+        "No Skill": {"effect": "No bonus", "values": [0]}
     }
 }
 
@@ -117,7 +101,7 @@ async def rally(ctx):
     """Start the Bear Hunt Rally Calculator"""
     embed = discord.Embed(
         title="🐻 Bear Hunt Rally Calculator",
-        description="Configure your Bear Hunt rally team for maximum effectiveness!\n\n**Features:**\n⚔️ 11 unique heroes with expedition skills\n🔄 Multiplicative bonuses for hero diversity\n📊 Color-coded optimization results\n🎯 Support for duplicate heroes",
+        description="Configure your Bear Hunt rally team for maximum effectiveness!\n\n**Features:**\n⚔️ 12 unique heroes with expedition skills\n🎯 **Only first expedition skills count** (accurate to game rules)\n🔄 Multiplicative bonuses for hero diversity\n📊 Color-coded optimization results\n🎯 Support for duplicate heroes",
         color=0x0099ff
     )
     
@@ -149,81 +133,51 @@ class RallyCalculatorView(ui.View):
     async def captain_callback(self, interaction: Interaction):
         self.captain = interaction.data['values'][0]
         
+        # Get the only expedition skill for this hero
+        skill_name = list(HERO_SKILLS[self.captain].keys())[0]
+        skill_data = HERO_SKILLS[self.captain][skill_name]
+        
         embed = discord.Embed(
             title=f"🐻 Rally Captain: {self.captain}",
-            description=f"**Rally Captain:** {self.captain}\n\nNow use the buttons below to configure skills and joiners.",
+            description=f"**Rally Captain:** {self.captain}\n**Expedition Skill:** {skill_name}\n**Effect:** {skill_data['effect']}\n\nSelect the skill level:",
             color=0x0099ff
         )
         
-        # Switch to skill configuration
-        skill_view = SkillConfigView(self.captain)
-        await interaction.response.edit_message(embed=embed, view=skill_view)
+        # Switch directly to effect level selection
+        effect_view = CaptainEffectView(self.captain, skill_name)
+        await interaction.response.edit_message(embed=embed, view=effect_view)
 
-class SkillConfigView(ui.View):
-    def __init__(self, captain):
+class CaptainEffectView(ui.View):
+    def __init__(self, captain, skill_name):
         super().__init__(timeout=300)
         self.captain = captain
-        self.selected_skill = None
-        self.selected_effect = None
+        self.skill_name = skill_name
         
-        # Add skill selection dropdown
-        skill_options = []
-        for skill_name in HERO_SKILLS[captain].keys():
-            skill_options.append(discord.SelectOption(
-                label=skill_name,
-                value=skill_name,
-                description=f"{HERO_SKILLS[captain][skill_name]['effect']}"
-            ))
-        
-        skill_select = ui.Select(
-            placeholder="Choose expedition skill...",
-            options=skill_options
-        )
-        skill_select.callback = self.skill_callback
-        self.add_item(skill_select)
-    
-    async def skill_callback(self, interaction: Interaction):
-        selected_skill = interaction.data['values'][0]
-        self.selected_skill = selected_skill
-        skill_effects = HERO_SKILLS[self.captain][selected_skill]
-        
-        embed = discord.Embed(
-            title=f"🐻 Rally Captain: {self.captain}",
-            description=f"**Rally Captain:** {self.captain}\n**Selected Skill:** {selected_skill}\n**Effect:** {skill_effects['effect']}\n\nNow select the effect level:",
-            color=0x0099ff
-        )
-        
-        # Add effect level selection
-        self.clear_items()
+        # Add effect level selection directly
+        skill_data = HERO_SKILLS[captain][skill_name]
         effect_options = []
-        for i, value in enumerate(skill_effects['values']):
+        for i, value in enumerate(skill_data['values']):
             effect_options.append(discord.SelectOption(
                 label=f"Level {i+1}: +{value}%",
-                value=f"{selected_skill}|{value}",
-                description=f"{skill_effects['effect']} +{value}%"
+                value=str(value),
+                description=f"{skill_data['effect']} +{value}%"
             ))
         
         effect_select = ui.Select(
-            placeholder="Choose effect level...",
+            placeholder="Choose skill level...",
             options=effect_options
         )
         effect_select.callback = self.effect_callback
         self.add_item(effect_select)
-        
-        await interaction.response.edit_message(embed=embed, view=self)
     
     async def effect_callback(self, interaction: Interaction):
-        selected = interaction.data['values'][0]
-        skill_name, effect_value = selected.split('|')
-        effect_value = int(effect_value)
-        self.selected_effect = effect_value
-        
-        skill_data = HERO_SKILLS[self.captain][skill_name]
+        effect_value = int(interaction.data['values'][0])
+        skill_data = HERO_SKILLS[self.captain][self.skill_name]
         effect_name = skill_data["effect"]
         
         embed = discord.Embed(
             title="🐻 Bear Hunt Rally Setup Complete!",
-            description=f"**Rally Captain:** {self.captain}\n**Skill:** {skill_name}\n**Effect:** {effect_name} (+{effect_value}%)\n\n✅ Captain ready! Now choose joiner heroes:",
+            description=f"**Rally Captain:** {self.captain}\n**Skill:** {self.skill_name}\n**Effect:** {effect_name} (+{effect_value}%)\n\n✅ Captain ready! Now choose joiner heroes:",
             color=0x00ff00
         )
         
@@ -241,12 +195,12 @@ class SkillConfigView(ui.View):
             placeholder="How many joiner heroes? (1-4 required)",
             options=joiner_options
         )
-        joiner_select.callback = self.joiner_count_callback
+        joiner_select.callback = lambda inter: self.joiner_count_callback(inter, effect_value)
         self.add_item(joiner_select)
         
         await interaction.response.edit_message(embed=embed, view=self)
     
-    async def joiner_count_callback(self, interaction: Interaction):
+    async def joiner_count_callback(self, interaction: Interaction, captain_effect):
         joiner_count = int(interaction.data['values'][0])
         
         embed = discord.Embed(
@@ -256,7 +210,7 @@ class SkillConfigView(ui.View):
         )
         
         # Switch to joiner configuration
-        joiner_view = JoinerConfigView(self.captain, self.selected_effect, joiner_count)
+        joiner_view = JoinerConfigView(self.captain, captain_effect, joiner_count)
         await interaction.response.edit_message(embed=embed, view=joiner_view)
 
 # Joiner Configuration Class
@@ -294,54 +248,27 @@ class JoinerConfigView(ui.View):
     async def joiner_hero_callback(self, interaction: Interaction):
         selected_hero = interaction.data['values'][0]
         
-        # Add skill selection for this joiner
-        embed = discord.Embed(
-            title="🐻 Bear Hunt Rally Configuration",
-            description=f"**Rally Captain:** {self.captain} ✅\n**Current Joiner:** {selected_hero}\n\n🎯 Select expedition skill for {selected_hero}:",
-            color=0x0099ff
-        )
-        
-        self.clear_items()
-        skill_options = []
-        for skill_name in HERO_SKILLS[selected_hero].keys():
-            skill_options.append(discord.SelectOption(
-                label=skill_name,
-                value=f"{selected_hero}|{skill_name}",
-                description=f"{HERO_SKILLS[selected_hero][skill_name]['effect']}"
-            ))
-        
-        skill_select = ui.Select(
-            placeholder="Choose expedition skill...",
-            options=skill_options
-        )
-        skill_select.callback = self.joiner_skill_callback
-        self.add_item(skill_select)
-        
-        await interaction.response.edit_message(embed=embed, view=self)
-    
-    async def joiner_skill_callback(self, interaction: Interaction):
-        selected = interaction.data['values'][0]
-        hero_name, skill_name = selected.split('|')
-        skill_effects = HERO_SKILLS[hero_name][skill_name]
+        # Get the only expedition skill for this hero
+        skill_name = list(HERO_SKILLS[selected_hero].keys())[0]
+        skill_data = HERO_SKILLS[selected_hero][skill_name]
         
         embed = discord.Embed(
             title="🐻 Bear Hunt Rally Configuration",
-            description=f"**Rally Captain:** {self.captain} ✅\n**Current Joiner:** {hero_name}\n**Selected Skill:** {skill_name}\n\nNow select the effect level:",
+            description=f"**Rally Captain:** {self.captain} ✅\n**Current Joiner:** {selected_hero}\n**Expedition Skill:** {skill_name}\n**Effect:** {skill_data['effect']}\n\nSelect skill level:",
             color=0x0099ff
         )
         
-        # Add effect level selection
         self.clear_items()
         effect_options = []
-        for i, value in enumerate(skill_effects['values']):
+        for i, value in enumerate(skill_data['values']):
             effect_options.append(discord.SelectOption(
                 label=f"Level {i+1}: +{value}%",
-                value=f"{hero_name}|{skill_name}|{value}",
-                description=f"{skill_effects['effect']} +{value}%"
+                value=f"{selected_hero}|{skill_name}|{value}",
+                description=f"{skill_data['effect']} +{value}%"
             ))
         
         effect_select = ui.Select(
-            placeholder="Choose effect level...",
+            placeholder="Choose skill level...",
             options=effect_options
         )
         effect_select.callback = self.joiner_effect_callback
