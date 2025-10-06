@@ -943,18 +943,6 @@ async def test_command(ctx):
     """Simple test command to verify bot is working"""
     await ctx.send("✅ Bot is working! All systems operational. 🚀")
 
-@bot.command(name='rally')
-async def rally_command(ctx):
-    """Traditional rally calculator command - works immediately"""
-    embed = discord.Embed(
-        title="🐻 Bear Hunt Rally Calculator",
-        description="Configure your Bear Hunt rally team for maximum effectiveness!\n\n**Features:**\n⚔️ 11 unique heroes with expedition skills\n🔄 Multiplicative bonuses for hero diversity\n📊 Color-coded optimization results\n🎯 Support for duplicate heroes",
-        color=0x0099ff
-    )
-    
-    view = RallyCalculatorView()
-    await ctx.send(embed=embed, view=view)
-
 @bot.command(name='help')
 async def help_command(ctx):
     """Show available commands"""
