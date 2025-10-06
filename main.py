@@ -3,6 +3,18 @@ import discord
 from discord.ext import commands
 from discord import ui, Interaction
 
+# Optional: Import keep@bot.command()
+async def rally(ctx):
+    """Start the Bear Hunt Rally Calculator"""
+    embed = discord.Embed(
+        title="🐻 Bear Hunt Rally Calculator",
+        description="Configure your Bear Hunt rally team for maximum effectiveness!\\n\\n**Rally Mechanics (Official Guide):**\\n👑 **Rally Captain**: Enter player name, select 1-3 heroes (up to 9 skills total)\\n🤝 **Rally Members**: Contribute 4 highest-level first expedition skills\\n📊 **Captain skills**: All additive within rally\\n⚠️ **Note**: Chance-based skills (like Jabel) don't stack for members\\n🔄 Simple addition: Captain Total + Top 4 Member Skills\\n📊 Color-coded optimization results",
+        color=0x0099ff
+    )
+    
+    view = RallyCalculatorView()
+    await ctx.send(embed=embed, view=view)
+
 # Optional: Import keep-alive for 24/7 hosting
 try:
     from keep_alive import keep_alive
@@ -22,8 +34,17 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Hero data - Jabel removed (chance-based skills don't stack per PDF)
-HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric"]
+if not BOT_TOKEN:
+    print("❌ Error: DISCORD_TOKEN environment variable not set!")
+    exit(1)
+
+# Enhanced bot with Bear Hunt Rally Calculator
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(command_prefix='!', intents=intents)
+
+# Hero data - Jabel included (captain can use, joiners should avoid chance-based skills)
+HEROES = ["Chenko", "Amadeus", "Yeonwoo", "Amane", "Howard", "Quinn", "Gordon", "Fahd", "Saul", "Hilde", "Eric", "Jabel"]
 
 # Hero effect operation mapping for multiplicative bonuses
 HERO_EFFECT_OPS = {
@@ -37,7 +58,8 @@ HERO_EFFECT_OPS = {
     "Fahd": 107,
     "Saul": 108,
     "Hilde": 109,
-    "Eric": 110
+    "Eric": 110,
+    "Jabel": 111
 }
 
 HERO_SKILLS = {
@@ -86,6 +108,12 @@ HERO_SKILLS = {
         "Holy Warrior": {"effect": "Enemy Troop Attack Down", "values": [4, 8, 12, 16, 20]},
         "Conviction": {"effect": "Damage Taken Down", "values": [4, 8, 12, 16, 20]},
         "Exhortation": {"effect": "Health Up", "values": [5, 10, 15, 20, 25]}
+    },
+    "Jabel": {
+        "No Skill": {"effect": "No bonus", "values": [0]},
+        "Rally Flag": {"effect": "Damage Taken Chance Down", "values": [8, 16, 24, 32, 40]},
+        "Hero's Domain": {"effect": "Damage Up", "values": [10, 20, 30, 40, 50]},
+        "Youthful Rage": {"effect": "Lethality Up", "values": [5, 10, 15, 20, 25]}
     }
 }
 
@@ -118,38 +146,37 @@ async def rally(ctx):
     await ctx.send(embed=embed, view=view)
 
 # Rally Calculator UI Classes
-class RallyCalculatorView(ui.View):
+class CaptainNameModal(ui.Modal):
     def __init__(self):
-        super().__init__(timeout=300)
-        self.captain = None
+        super().__init__(title="Rally Captain Setup")
         
-        # Add captain selection dropdown
-        captain_select = ui.Select(
-            placeholder="Choose your rally captain",
-            options=[
-                discord.SelectOption(
-                    label=hero,
-                    value=hero,
-                    description=f"Select {hero} as rally captain",
-                    emoji="👑"
-                )
-                for hero in HEROES
-            ]
+        self.name_input = ui.TextInput(
+            label="Rally Captain Player Name",
+            placeholder="Enter the player name who will be rally captain...",
+            max_length=50,
+            required=True
         )
-        captain_select.callback = self.captain_callback
-        self.add_item(captain_select)
+        self.add_item(self.name_input)
     
-    async def captain_callback(self, interaction: Interaction):
-        self.captain = interaction.data['values'][0]
+    async def on_submit(self, interaction: Interaction):
+        captain_name = self.name_input.value.strip()
         
         embed = discord.Embed(
             title=f"🐻 Rally Captain Setup",
-            description=f"**Selected Captain Player:** {self.captain}\n\nAs Rally Captain, you can select 1-3 heroes for your squad.\n**How many heroes do you want to bring?**",
+            description=f"**Rally Captain:** {captain_name}\\n\\nAs Rally Captain, you can select 1-3 heroes for your squad.\\n**How many heroes do you want to bring?**",
             color=0x0099ff
         )
         
+        # Switch to hero count selection
+        hero_count_view = HeroCountView(captain_name)
+        await interaction.response.edit_message(embed=embed, view=hero_count_view)
+
+class HeroCountView(ui.View):
+    def __init__(self, captain_name):
+        super().__init__(timeout=300)
+        self.captain_name = captain_name
+        
         # Add hero count selection (1-3)
-        self.clear_items()
         hero_count_options = [
             discord.SelectOption(label="1 Hero", value="1", description="Bring 1 hero (up to 3 skills)"),
             discord.SelectOption(label="2 Heroes", value="2", description="Bring 2 heroes (up to 6 skills)"),
@@ -162,21 +189,37 @@ class RallyCalculatorView(ui.View):
         )
         hero_count_select.callback = self.hero_count_callback
         self.add_item(hero_count_select)
-        
-        await interaction.response.edit_message(embed=embed, view=self)
     
     async def hero_count_callback(self, interaction: Interaction):
         hero_count = int(interaction.data['values'][0])
         
         embed = discord.Embed(
             title="🐻 Rally Captain Hero Selection",
-            description=f"**Captain:** {self.captain}\\n**Heroes to configure:** {hero_count}\\n\\nLet's set up your heroes...",
+            description=f"**Captain:** {self.captain_name}\\n**Heroes to configure:** {hero_count}\\n\\nLet's set up your heroes...",
             color=0x0099ff
         )
         
         # Switch to captain multi-hero configuration
-        captain_view = CaptainMultiHeroView(self.captain, hero_count)
+        captain_view = CaptainMultiHeroView(self.captain_name, hero_count)
         await interaction.response.edit_message(embed=embed, view=captain_view)
+
+class RallyCalculatorView(ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+        
+        # Add simple text input button for captain name
+        name_button = ui.Button(
+            label="Start Rally Setup",
+            style=discord.ButtonStyle.primary,
+            emoji="�"
+        )
+        name_button.callback = self.start_setup_callback
+        self.add_item(name_button)
+    
+    async def start_setup_callback(self, interaction: Interaction):
+        # Show modal for player name input
+        modal = CaptainNameModal()
+        await interaction.response.send_modal(modal)
 
 class CaptainMultiHeroView(ui.View):
     def __init__(self, captain, hero_count):
